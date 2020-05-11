@@ -1,0 +1,56 @@
+
+// Insert data into created collection 'locations'
+db.locations.insertMany([
+    {name: "La Banane", "locations": { type: "Point", coordinates: [2.389150857925415,48.863881928701325] } },
+    {name: "Le Bat 7", "locations": { type: "Point", coordinates: [2.4478912353515625,48.62709405479115] } }, 
+    {name: "10ème Arrondissement", "locations": { type: "Point", coordinates: [2.358841896057129,48.87631652031483] } }
+])
+
+// on créer un index de type 2dsphere 
+db.locations.createIndex({ location: "2dsphere" });
+
+// on recupére le premier element du near pour trouver le plus proche de notre point [2.3692703247070312,48.85342092943525]
+db.locations.findOne({
+  location: {
+    $near: {
+      $geometry: {
+        type: "Point",
+        coordinates: [2.3692703247070312,48.85342092943525],
+      },
+    },
+  },
+}).pretty();
+
+// Grace au coordoné de notre polygone on ressort les deux points compris à l'interieur
+db.locations.find({ 
+  location: {
+    $geoWithin: { 
+      $geometry: {
+        type: "Polygon", 
+         coordinates: [
+          [ 
+            [2.333908081054687,48.913023573727465],
+            [2.3414611816406246,48.826757381274426],
+            [2.454757690429687,48.864263057433895],
+            [2.333908081054687,48.913023573727465],
+            [2.333908081054687,48.913023573727465]
+          ]
+        ] 
+      } 
+    } 
+  } 
+}).pretty()
+
+//  ressort tous les points qui sont compris dans le cercle de rayons $maxDistance et de centre   [ 2.3692703247070312,48.85342092943525]
+db.locations.find({
+  location: {
+    $nearSphere: {
+      $geometry: {
+        type: "Point",
+        coordinates: [2.3692703247070312,48.85342092943525],
+      },
+      $maxDistance: 5000,
+      $minDistance: 0,
+    },
+  },
+}).pretty();
